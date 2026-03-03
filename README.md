@@ -11,8 +11,7 @@ This repo contains small building blocks to:
 
 - `agent.py` – Agent class, tool registry setup, and single-step model call.
 - `model.py` – OpenAI-compatible chat completion wrapper.
-- `tool.py` – Current `Tool` class (minimal/incomplete implementation).
-- `tool copy.py` – Alternate `Tool` implementation with decorator + schema support.
+- `tool.py` – Tool class implementation with decorator + schema support.
 - `test.py` – Example usage (tool declaration, model call, and agent step).
 
 ## Requirements
@@ -78,4 +77,3 @@ print(response)
 ## License
 
 No license file is currently included. Add a `LICENSE` file before publishing if needed.
-"# AI_Agent_Framework" 
