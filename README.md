@@ -1,145 +1,80 @@
-"# Agent Framework
+# Agent Framework
 
-A simple Python framework for building AI agents using OpenAI's API with tool-calling capabilities.
+A lightweight Python agent framework for experimenting with tool-enabled LLM workflows.
 
-## Features
+This repo contains small building blocks to:
+- Define an LLM model wrapper (`Model`)
+- Define tools with JSON schema (`Tool`)
+- Build an agent that sends messages + tool schemas to a chat completion model (`Agent`)
 
-- Easy integration with OpenAI's chat completions API
-- Support for tool calling (function calling)
-- Customizable system prompts
-- Message history management
-- Function registry for handling tools
+## Project Structure
+
+- `agent.py` – Agent class, tool registry setup, and single-step model call.
+- `model.py` – OpenAI-compatible chat completion wrapper.
+- `tool.py` – Current `Tool` class (minimal/incomplete implementation).
+- `tool copy.py` – Alternate `Tool` implementation with decorator + schema support.
+- `test.py` – Example usage (tool declaration, model call, and agent step).
 
 ## Requirements
 
-- Python 3.7+
-- OpenAI API key
-- `openai` Python package
+- Python 3.10+
+- Packages:
+  - `openai`
+  - `python-dotenv`
+- API key for an OpenAI-compatible endpoint (example in this repo uses Groq API compatibility).
 
 ## Installation
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   cd agent-framework
-   ```
-
-2. Install dependencies:
-   ```
-   pip install openai
-   ```
-
-## Usage
-
-### Basic Setup
-
-```python
-from agent import Agent
-
-# Initialize the agent
-agent = Agent(
-    base_url="https://api.openai.com/v1",
-    api_key="your-openai-api-key",
-    model="gpt-4",
-    system_prompt="You are a helpful AI assistant."
-)
+```bash
+pip install openai python-dotenv
 ```
 
-### Adding Tools
+Create a `.env` file in the project root:
 
-```python
-# Define tool descriptions
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "Get the current weather for a location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {
-                        "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA"
-                    }
-                },
-                "required": ["location"]
-            }
-        }
-    }
-]
-
-# Define function registry
-def get_weather(location: str) -> str:
-    # Implement your weather function
-    return f"The weather in {location} is sunny."
-
-function_registry = {
-    "get_weather": get_weather
-}
-
-# Create agent with tools
-agent = Agent(
-    base_url="https://api.openai.com/v1",
-    api_key="your-openai-api-key",
-    model="gpt-4",
-    toolsDesc=tools,
-    function_registry=function_registry
-)
+```env
+GROQ_API_KEY=your_api_key_here
 ```
 
-### Interacting with the Agent
+## Quick Start
+
+Run the example:
+
+```bash
+python test.py
+```
+
+## How It Works
+
+1. A tool is defined with a name, description, and JSON input schema.
+2. `Agent` collects all tool schemas and sends them in `tools` to the model.
+3. `Model.complete()` calls chat completions with `tool_choice="auto"`.
+4. `Agent.step()` returns the model message for the current conversation state.
+
+## Important Note
+
+`test.py` currently uses `@Tool.toolthis(...)`, which is implemented in `tool copy.py`, but **not** in the active `tool.py`.
+
+If you run into errors, either:
+- Replace `tool.py` with the implementation from `tool copy.py`, or
+- Update `test.py` to match the current `Tool` class in `tool.py`.
+
+## Example: Current Agent Loop
+
+Minimal flow in this repo:
 
 ```python
-# Send a prompt
-response = agent.prompt("What's the weather like in New York?")
+agent.add_message(role="user", content="What is 5 + 7?")
+response = agent.step()
 print(response)
 ```
 
-### Handling Tool Call Outputs
+## Next Improvements
 
-The `prompt` method returns a list containing the AI's response and, if applicable, the results of any tool calls.
-
-- If no tool calls are made, the list contains one element: the AI's message object.
-- If tool calls are made, the list contains two elements: the AI's message object and the tool result dictionary.
-
-Example:
-
-```python
-response_list = agent.prompt("What's the weather like in New York?")
-
-# Access the AI's response
-ai_response = response_list[0]
-print("AI Response:", ai_response.content)
-
-# Check if tool calls were made
-if len(response_list) > 1:
-    tool_result = response_list[1]
-    print("Tool Result:", tool_result['content'])
-```
-
-The tool result is a dictionary with:
-- `role`: "tool"
-- `tool_call_id`: The ID of the tool call
-- `content`: The output of the executed function
-
-### Resetting Conversation
-
-```python
-agent.reset_messages()  # Clears message history except system prompt
-```
-
-## API Reference
-
-### Agent Class
-
-- `__init__(base_url, api_key, model, toolsDesc=[], function_registry={}, system_prompt="You are an AI Agent")`: Initialize the agent.
-- `add_message(role, content)`: Add a message to the conversation.
-- `complete()`: Get a completion from the model.
-- `handle_tool_call(tool_call)`: Handle a tool call.
-- `prompt(user_input)`: Send user input and get response.
-- `reset_messages()`: Reset the message history.
+- Add full tool-call execution loop (parse tool calls, execute Python function, append tool result, continue).
+- Unify `tool.py` and `tool copy.py` into one canonical implementation.
+- Add tests for tool registration and duplicate handling.
+- Add type hints + validation for tool schemas.
 
 ## License
 
-MIT License
+No license file is currently included. Add a `LICENSE` file before publishing if needed.
